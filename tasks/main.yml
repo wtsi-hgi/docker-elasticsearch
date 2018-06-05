@@ -107,6 +107,7 @@
     env:
       cluster.name: elasticsearch-cluster
       discovery.type: single-node
+    # TODO: Set Java Heap size to appropriate level
 
 - name: flush handlers to trigger restart of Elasticsearch if required
   meta: flush_handlers
