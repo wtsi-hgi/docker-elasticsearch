@@ -1,7 +1,12 @@
-# Required:
-#   docker_elasticsearch_node_pemcert
+# Variables that have no defaults and must be set:
+#   docker_elasticsearch_node_pemcert:
+#     [str] used to set searchguard.ssl.http.pemcert_filepath (https://docs.search-guard.com/latest/configuring-tls)
+#
 #   docker_elasticsearch_node_pemkey
+#     [str] used to set searchguard.ssl.transport.pemkey_filepath (https://docs.search-guard.com/latest/configuring-tls)
+#
 #   docker_elasticsearch_pemtrustedcas
+#     [str] used to set searchguard.ssl.http.pemtrustedcas_filepath (https://docs.search-guard.com/latest/configuring-tls)
 
 ---
 
