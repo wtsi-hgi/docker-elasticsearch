@@ -1,0 +1,11 @@
+# This is the internal user database
+# The hash value is a bcrypt hash and can be generated with plugin/tools/hash.sh
+
+{% for user in docker_elasticsearch_users | sort %}
+{{ user.username }}:
+  hash: {{ user.password | password_hash('blowfish', docker_elasticsearch_password_hash_salt) }}
+  roles:
+    {% for role in user.roles %}
+    - {{ role }}
+    {% endfor %}
+{% endfor %}

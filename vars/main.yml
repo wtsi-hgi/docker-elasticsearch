@@ -1,0 +1,8 @@
+---
+
+docker_elasticsearch_mounted_config_directory_name: mounted
+
+docker_elasticsearch_node_pemcert_filename: node.pem
+docker_elasticsearch_node_pemkey_filename: node.key.pem
+docker_elasticsearch_pemtrustedcas_filename: chain-ca.pem
+

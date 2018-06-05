@@ -1,0 +1,19 @@
+# Required:
+#   docker_elasticsearch_node_pemcert
+#   docker_elasticsearch_node_pemkey
+#   docker_elasticsearch_pemtrustedcas
+
+---
+
+docker_elasticsearch_users: []
+docker_elasticsearch_password_hash_salt: "{{ (inventory_hostname | checksum)[:22] }}"
+
+docker_elasticsearch_data_directory: /usr/share/elasticsearch/data
+docker_elasticsearch_logs_directory: /usr/share/elasticsearch/logs
+docker_elasticsearch_configuration_directory: /usr/share/elasticsearch/config
+docker_elasticsearch_docker_build_files_directory: /usr/share/elasticsearch/docker
+
+docker_elasticsearch_ssl_http_enabled: false
+
+docker_elasticsearch_apt_cache_valid_time: 3600
+docker_elasticsearch_vm_max_map_count: 262144

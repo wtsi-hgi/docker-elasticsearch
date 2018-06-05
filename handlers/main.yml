@@ -1,0 +1,8 @@
+---
+
+- name: restart Elasticsearch
+  become: yes
+  docker_container:
+    name: elasticsearch
+    restart: yes
+  listen: restart_elasticsearch

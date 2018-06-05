@@ -1,0 +1,118 @@
+---
+
+- name: ensure required variables have been set
+  no_log: true
+  assert:
+    that:
+      - item | mandatory
+  with_items:
+    - "{{ docker_elasticsearch_node_pemcert }}"
+    - "{{ docker_elasticsearch_node_pemkey }}"
+    - "{{ docker_elasticsearch_pemtrustedcas }}"
+
+- name: install apt prerequisites
+  become: yes
+  apt:
+    name: "{{ item }}"
+    update_cache: yes
+    cache_valid_time: "{{ docker_elasticsearch_apt_cache_valid_time }}"
+  with_items:
+    - python-pip
+
+- name: install pip prerequisites
+  become: yes
+  pip:
+    name: "{{ item }}"
+  with_items:
+    - docker-py
+
+- name: tune sysctl parameters, as described in https://www.elastic.co/guide/en/elasticsearch/reference/current/docker.html
+  become: yes
+  sysctl:
+    name: "{{ item.name }}"
+    value: "{{ item.value }}"
+  with_items:
+    - name: vm.max_map_count
+      value: "{{ docker_elasticsearch_vm_max_map_count }}"
+
+- name: create data directories
+  become: yes
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: 0770
+  with_items:
+    - "{{ docker_elasticsearch_data_directory }}"
+    - "{{ docker_elasticsearch_logs_directory }}"
+    - "{{ docker_elasticsearch_configuration_directory }}"
+
+- name: write TLS related files
+  become: yes
+  no_log: true
+  copy:
+    content: "{{ item.content }}"
+    dest: "{{ docker_elasticsearch_configuration_directory }}/{{ item.filename }}"
+    mode: 0640
+  with_items:
+   - content: "{{ docker_elasticsearch_node_pemcert }}"
+     filename: "{{ docker_elasticsearch_node_pemcert_filename }}"
+   - content: "{{ docker_elasticsearch_node_pemkey }}"
+     filename: "{{ docker_elasticsearch_node_pemkey_filename }}"
+   - content: "{{ docker_elasticsearch_pemtrustedcas }}"
+     filename: "{{ docker_elasticsearch_pemtrustedcas_filename }}"
+
+- name: write Elasticsearch configuration file
+  become: yes
+  template:
+    src: elasticsearch.yml.j2
+    dest: "{{ docker_elasticsearch_configuration_directory }}/elasticsearch.yml"
+  notify: restart_elasticsearch
+
+- name: write Elasticsearch users file
+  become: yes
+  template:
+    src: sg_internal_users.yml.j2
+    dest: "{{ docker_elasticsearch_configuration_directory }}/sg_internal_users.yml"
+  # FIXME: Need to use sgadmin to push changes (hot): https://docs.search-guard.com/latest/sgadmin. Restarting
+  # Elasticsearch with the same data is not enough!
+#  notify: restart_elasticsearch
+
+- name: copy Docker build files
+  become: yes
+  copy:
+    src: files/elasticsearch-docker-build/
+    dest: "{{ docker_elasticsearch_docker_build_files_directory }}"
+
+- name: build Elasticsearch + Search Guard image
+  become: yes
+  docker_image:
+    name: ansible-docker-elasticsearch/elasticsearch
+    path: "{{ docker_elasticsearch_docker_build_files_directory }}"
+  notify: restart_elasticsearch
+
+- name: create Elasticsearch container
+  become: yes
+  docker_container:
+    name: elasticsearch
+    image: ansible-docker-elasticsearch/elasticsearch
+    state: present
+    published_ports:
+      - "9200:9200"
+    volumes:
+      - "{{ docker_elasticsearch_data_directory }}:/usr/share/elasticsearch/data"
+      - "{{ docker_elasticsearch_logs_directory }}:/usr/share/elasticsearch/logs"
+      - "{{ docker_elasticsearch_configuration_directory }}:/usr/share/elasticsearch/config/{{ docker_elasticsearch_mounted_config_directory_name }}"
+      - "{{ docker_elasticsearch_configuration_directory }}/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml"
+      - "{{ docker_elasticsearch_configuration_directory }}/sg_internal_users.yml:/usr/share/elasticsearch/plugins/search-guard-6/sgconfig/sg_internal_users.yml"
+    env:
+      cluster.name: elasticsearch-cluster
+      discovery.type: single-node
+
+- name: flush handlers to trigger restart of Elasticsearch if required
+  meta: flush_handlers
+
+- name: start Elasticsearch container
+  become: yes
+  docker_container:
+    name: elasticsearch
+    state: started

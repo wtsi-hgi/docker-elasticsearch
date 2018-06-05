@@ -1,0 +1,32 @@
+---
+
+cluster.name: "docker-cluster"
+network.host: 0.0.0.0
+
+# minimum_master_nodes need to be explicitly set when bound on a public IP
+# set to 1 to allow single node clusters
+# Details: https://github.com/elastic/elasticsearch/pull/17288
+discovery.zen.minimum_master_nodes: 1
+
+searchguard.ssl.transport.pemcert_filepath: "{{ docker_elasticsearch_mounted_config_directory_name }}/{{ docker_elasticsearch_node_pemcert_filename }}"
+searchguard.ssl.transport.pemkey_filepath: "{{ docker_elasticsearch_mounted_config_directory_name }}/{{ docker_elasticsearch_node_pemkey_filename }}"
+searchguard.ssl.transport.pemtrustedcas_filepath: "{{ docker_elasticsearch_mounted_config_directory_name }}/{{ docker_elasticsearch_pemtrustedcas_filename }}"
+
+searchguard.ssl.http.enabled: "{{ docker_elasticsearch_ssl_http_enabled | lower }}"
+searchguard.ssl.http.pemcert_filepath: "{{ docker_elasticsearch_mounted_config_directory_name }}/{{ docker_elasticsearch_node_pemcert_filename }}"
+searchguard.ssl.http.pemkey_filepath: "{{ docker_elasticsearch_mounted_config_directory_name }}/{{ docker_elasticsearch_node_pemkey_filename }}"
+searchguard.ssl.http.pemtrustedcas_filepath: "{{ docker_elasticsearch_mounted_config_directory_name }}/{{ docker_elasticsearch_pemtrustedcas_filename }}"
+
+searchguard.ssl.transport.enforce_hostname_verification: false
+
+searchguard.allow_default_init_sgindex: true
+searchguard.authcz.admin_dn:
+  - CN=sgadmin
+
+searchguard.audit.type: internal_elasticsearch
+searchguard.enable_snapshot_restore_privilege: true
+searchguard.check_snapshot_restore_write_privileges: true
+searchguard.restapi.roles_enabled: ["sg_all_access"]
+cluster.routing.allocation.disk.threshold_enabled: false
+
+searchguard.enterprise_modules_enabled: false
